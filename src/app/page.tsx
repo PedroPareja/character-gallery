@@ -37,6 +37,7 @@ export default function GalleryPage() {
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [labelFilterMode, setLabelFilterMode] = useState<"AND" | "OR">("AND");
   const [importOpen, setImportOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importMode, setImportMode] = useState<"replace" | "merge">("replace");
@@ -46,7 +47,7 @@ export default function GalleryPage() {
 
   const fetchCharacters = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ picSet, sortBy, sortOrder });
+    const params = new URLSearchParams({ picSet, sortBy, sortOrder, labelFilterMode });
     if (selectedLabels.length > 0) {
       params.set("labels", selectedLabels.join(","));
     }
@@ -54,7 +55,7 @@ export default function GalleryPage() {
     const data = await res.json();
     setCharacters(data.characters || []);
     setLoading(false);
-  }, [picSet, selectedLabels, sortBy, sortOrder]);
+  }, [picSet, selectedLabels, sortBy, sortOrder, labelFilterMode]);
 
   const fetchLabels = useCallback(async () => {
     const res = await fetch("/api/labels");
@@ -280,9 +281,30 @@ export default function GalleryPage() {
               </DropdownMenuContent>
             </DropdownMenu>
             {selectedLabels.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setSelectedLabels([])}>
-                Clear
-              </Button>
+              <>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedLabels([])}>
+                  Clear
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-7 gap-1 rounded-[calc(var(--radius-md)*1deg)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5">
+                    {labelFilterMode}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuCheckboxItem
+                      checked={labelFilterMode === "AND"}
+                      onCheckedChange={() => setLabelFilterMode("AND")}
+                    >
+                      AND
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={labelFilterMode === "OR"}
+                      onCheckedChange={() => setLabelFilterMode("OR")}
+                    >
+                      OR
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             )}
             <Button variant="ghost" size="sm" onClick={() => setLabelsOpen(true)}>
               <Tag className="w-4 h-4" />

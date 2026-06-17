@@ -10,16 +10,34 @@ export async function GET(request: Request) {
   const picSet = (searchParams.get("picSet") as PicType) || "face";
   const sortBy = searchParams.get("sortBy") || "name";
   const sortOrder = searchParams.get("sortOrder") || "asc";
+  const labelFilterMode = searchParams.get("labelFilterMode") || "AND";
 
   let characters;
 
   if (labelFilter.length > 0) {
-    const characterIds = db
-      .select({ characterId: schema.characterLabels.characterId })
-      .from(schema.characterLabels)
-      .where(inArray(schema.characterLabels.labelId, labelFilter))
-      .all()
-      .map((r) => r.characterId);
+    let characterIds: string[];
+
+    if (labelFilterMode === "AND") {
+      const sets = labelFilter.map((labelId) => {
+        return db
+          .select({ characterId: schema.characterLabels.characterId })
+          .from(schema.characterLabels)
+          .where(eq(schema.characterLabels.labelId, labelId))
+          .all()
+          .map((r) => r.characterId);
+      });
+
+      characterIds = sets.reduce((acc, set) =>
+        acc.filter((id) => set.includes(id))
+      );
+    } else {
+      characterIds = db
+        .select({ characterId: schema.characterLabels.characterId })
+        .from(schema.characterLabels)
+        .where(inArray(schema.characterLabels.labelId, labelFilter))
+        .all()
+        .map((r) => r.characterId);
+    }
 
     if (characterIds.length === 0) {
       return NextResponse.json({ characters: [] });
