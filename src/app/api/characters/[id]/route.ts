@@ -122,7 +122,7 @@ export async function DELETE(
   for (const img of charImages) {
     const fs = await import("fs");
     const path = await import("path");
-    const filePath = path.join(process.cwd(), "data", "images", img.filename);
+    const filePath = path.join(process.cwd(), "data", "images", img.type, img.filename);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
