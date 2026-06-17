@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, X, ChevronLeft, ImageIcon } from "lucide-react";
+import { Plus, X, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
 import { ImageData, PicType } from "@/lib/types";
 import { toast } from "sonner";
 import {
@@ -32,6 +32,8 @@ export default function ImageGallery({ type }: ImageGalleryProps) {
   const [uploading, setUploading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<ImageData | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const fetchImages = useCallback(async () => {
     const res = await fetch(`/api/characters/${characterId}/images?type=${type}`);
@@ -43,6 +45,23 @@ export default function ImageGallery({ type }: ImageGalleryProps) {
   useState(() => {
     fetchImages();
   });
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setLightboxOpen(false);
+      } else if (e.key === "ArrowLeft") {
+        setLightboxIndex((i) => (i > 0 ? i - 1 : images.length - 1));
+      } else if (e.key === "ArrowRight") {
+        setLightboxIndex((i) => (i < images.length - 1 ? i + 1 : 0));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen, images.length]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -155,7 +174,14 @@ export default function ImageGallery({ type }: ImageGalleryProps) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {images.map((image) => (
-              <div key={image.id} className="relative group aspect-[3/4]">
+              <div
+                key={image.id}
+                className="relative group aspect-[3/4] cursor-pointer"
+                onClick={() => {
+                  setLightboxIndex(images.indexOf(image));
+                  setLightboxOpen(true);
+                }}
+              >
                 <Image
                   src={image.url}
                   alt={image.originalName || "Character image"}
@@ -182,6 +208,60 @@ export default function ImageGallery({ type }: ImageGalleryProps) {
           </div>
         )}
       </main>
+
+      {lightboxOpen && images.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+
+          {images.length > 1 && (
+            <>
+              <button
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex((i) => (i > 0 ? i - 1 : images.length - 1));
+                }}
+              >
+                <ChevronLeft className="w-8 h-8 text-white" />
+              </button>
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex((i) => (i < images.length - 1 ? i + 1 : 0));
+                }}
+              >
+                <ChevronRight className="w-8 h-8 text-white" />
+              </button>
+            </>
+          )}
+
+          <div
+            className="relative w-full h-full max-w-[90vw] max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={images[lightboxIndex].url}
+              alt={images[lightboxIndex].originalName || "Character image"}
+              fill
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+            {lightboxIndex + 1} / {images.length}
+          </div>
+        </div>
+      )}
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
