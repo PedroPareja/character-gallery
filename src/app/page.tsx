@@ -6,7 +6,7 @@ import { CharacterCard } from "@/components/CharacterCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Shuffle, Settings, Tag, X } from "lucide-react";
+import { Plus, Shuffle, Settings, Tag, X, ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -26,12 +26,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
+type SortBy = "name" | "createdAt" | "random";
+type SortOrder = "asc" | "desc";
+
 export default function GalleryPage() {
   const [characters, setCharacters] = useState<CharacterWithLabels[]>([]);
   const [labels, setLabels] = useState<LabelData[]>([]);
   const [loading, setLoading] = useState(true);
   const [picSet, setPicSet] = useState<PicType>("face");
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<SortBy>("name");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [importOpen, setImportOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importMode, setImportMode] = useState<"replace" | "merge">("replace");
@@ -41,7 +46,7 @@ export default function GalleryPage() {
 
   const fetchCharacters = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ picSet });
+    const params = new URLSearchParams({ picSet, sortBy, sortOrder });
     if (selectedLabels.length > 0) {
       params.set("labels", selectedLabels.join(","));
     }
@@ -49,7 +54,7 @@ export default function GalleryPage() {
     const data = await res.json();
     setCharacters(data.characters || []);
     setLoading(false);
-  }, [picSet, selectedLabels]);
+  }, [picSet, selectedLabels, sortBy, sortOrder]);
 
   const fetchLabels = useCallback(async () => {
     const res = await fetch("/api/labels");
@@ -191,6 +196,49 @@ export default function GalleryPage() {
                   onCheckedChange={() => setPicSet("body")}
                 >
                   Body
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+            <DropdownMenu>
+              <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-7 gap-1 rounded-[calc(var(--radius-md)*1deg)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5">
+                {sortBy === "name" && (sortOrder === "asc" ? "A → Z" : "Z → A")}
+                {sortBy === "createdAt" && (sortOrder === "asc" ? "Oldest" : "Newest")}
+                {sortBy === "random" && "Random"}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuCheckboxItem
+                  checked={sortBy === "name" && sortOrder === "asc"}
+                  onCheckedChange={() => { setSortBy("name"); setSortOrder("asc"); }}
+                >
+                  A → Z
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={sortBy === "name" && sortOrder === "desc"}
+                  onCheckedChange={() => { setSortBy("name"); setSortOrder("desc"); }}
+                >
+                  Z → A
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={sortBy === "createdAt" && sortOrder === "asc"}
+                  onCheckedChange={() => { setSortBy("createdAt"); setSortOrder("asc"); }}
+                >
+                  Oldest first
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={sortBy === "createdAt" && sortOrder === "desc"}
+                  onCheckedChange={() => { setSortBy("createdAt"); setSortOrder("desc"); }}
+                >
+                  Newest first
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={sortBy === "random"}
+                  onCheckedChange={() => setSortBy("random")}
+                >
+                  Random
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>

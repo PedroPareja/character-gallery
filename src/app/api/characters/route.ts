@@ -8,6 +8,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const labelFilter = searchParams.get("labels")?.split(",").filter(Boolean) || [];
   const picSet = (searchParams.get("picSet") as PicType) || "face";
+  const sortBy = searchParams.get("sortBy") || "name";
+  const sortOrder = searchParams.get("sortOrder") || "asc";
 
   let characters;
 
@@ -30,6 +32,25 @@ export async function GET(request: Request) {
       .all();
   } else {
     characters = db.select().from(schema.characters).all();
+  }
+
+  if (sortBy === "name") {
+    characters.sort((a, b) =>
+      sortOrder === "asc"
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
+    );
+  } else if (sortBy === "createdAt") {
+    characters.sort((a, b) =>
+      sortOrder === "asc"
+        ? a.createdAt.localeCompare(b.createdAt)
+        : b.createdAt.localeCompare(a.createdAt)
+    );
+  } else if (sortBy === "random") {
+    for (let i = characters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [characters[i], characters[j]] = [characters[j], characters[i]];
+    }
   }
 
   const result: CharacterWithLabels[] = characters.map((char) => {
