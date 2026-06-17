@@ -191,12 +191,12 @@ export default function CharacterDetailPage() {
   if (!character) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="h-screen flex flex-col bg-background">
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm shrink-0 z-10">
+        <div className="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => router.push("/")}>
-              ← Back to Gallery
+            <Button variant="ghost" size="sm" onClick={() => router.push("/")}>
+              ← Gallery
             </Button>
             <h1 className="text-xl font-bold text-foreground">{character.name}</h1>
           </div>
@@ -211,19 +211,21 @@ export default function CharacterDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="space-y-4">
-            <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-muted">
+      <main className="flex-1 min-h-0 max-w-screen-2xl mx-auto w-full px-4 py-4 flex flex-col">
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 lg:gap-6">
+          <div className="flex flex-col min-h-0">
+            <div className="flex-1 min-h-0 relative rounded-lg overflow-hidden bg-muted">
               {faceUrl ? (
                 <>
-                  <Image src={faceUrl} alt="Face" fill className="object-cover" unoptimized />
-                  <button
-                    onClick={handleNextFace}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5 text-white" />
-                  </button>
+                  <Image src={faceUrl} alt="Face" fill className="object-contain" unoptimized />
+                  {faceImages.length > 1 && (
+                    <button
+                      onClick={handleNextFace}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+                    >
+                      <ChevronRight className="w-5 h-5 text-white" />
+                    </button>
+                  )}
                 </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -231,18 +233,20 @@ export default function CharacterDetailPage() {
                 </div>
               )}
             </div>
-            <Link href={`/character/${characterId}/face`}>
-              <Button variant="outline" className="w-full">
-                <ImageIcon className="w-4 h-4 mr-2" />
-                Face Gallery ({faceImages.length})
-              </Button>
-            </Link>
+            <div className="shrink-0 pt-3">
+              <Link href={`/character/${characterId}/face`}>
+                <Button variant="outline" className="w-full">
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  Face Gallery ({faceImages.length})
+                </Button>
+              </Link>
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <div>
+          <div className="lg:w-[320px] xl:w-[380px] flex flex-col min-h-0 overflow-y-auto">
+            <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-semibold text-foreground">Bio / Description</h2>
+                <h2 className="text-lg font-semibold text-foreground">Bio</h2>
                 <Button variant="ghost" size="sm" onClick={() => setEditBioOpen(true)}>
                   <Pencil className="w-4 h-4 mr-1" />
                   Edit
@@ -253,7 +257,7 @@ export default function CharacterDetailPage() {
               </div>
             </div>
 
-            <div>
+            <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-lg font-semibold text-foreground">Labels</h2>
                 <Button variant="ghost" size="sm" onClick={() => setEditLabelsOpen(true)}>
@@ -275,19 +279,63 @@ export default function CharacterDetailPage() {
                 ))}
               </div>
             </div>
+
+            <div className="mt-auto pt-4 border-t border-border">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Rotate:</span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-7 gap-1 rounded-[calc(var(--radius-md)*1deg)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5">
+                      {autoRotate ? "◉ On" : "○ Off"}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuCheckboxItem
+                        checked={autoRotate}
+                        onCheckedChange={setAutoRotate}
+                      >
+                        On
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem
+                        checked={! autoRotate}
+                        onCheckedChange={() => setAutoRotate(false)}
+                      >
+                        Off
+                      </DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Delay:</span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-7 gap-1 rounded-[calc(var(--radius-md)*1deg)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5">
+                      {rotateDelay}s
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {[3, 5, 10, 15, 30, 60].map((d) => (
+                        <DropdownMenuItem key={d} onClick={() => setRotateDelay(d)}>
+                          {d}s
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-muted">
+          <div className="flex flex-col min-h-0">
+            <div className="flex-1 min-h-0 relative rounded-lg overflow-hidden bg-muted">
               {bodyUrl ? (
                 <>
-                  <Image src={bodyUrl} alt="Body" fill className="object-cover" unoptimized />
-                  <button
-                    onClick={handleNextBody}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5 text-white" />
-                  </button>
+                  <Image src={bodyUrl} alt="Body" fill className="object-contain" unoptimized />
+                  {bodyImages.length > 1 && (
+                    <button
+                      onClick={handleNextBody}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+                    >
+                      <ChevronRight className="w-5 h-5 text-white" />
+                    </button>
+                  )}
                 </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -295,53 +343,13 @@ export default function CharacterDetailPage() {
                 </div>
               )}
             </div>
-            <Link href={`/character/${characterId}/body`}>
-              <Button variant="outline" className="w-full">
-                <ImageIcon className="w-4 h-4 mr-2" />
-                Body Gallery ({bodyImages.length})
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-8 p-4 bg-card rounded-lg border border-border">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Auto-rotate:</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-7 gap-1 rounded-[calc(var(--radius-md)*1deg)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5">
-                  {autoRotate ? "◉ On" : "○ Off"}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuCheckboxItem
-                    checked={autoRotate}
-                    onCheckedChange={setAutoRotate}
-                  >
-                    On
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={!autoRotate}
-                    onCheckedChange={() => setAutoRotate(false)}
-                  >
-                    Off
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Delay:</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-7 gap-1 rounded-[calc(var(--radius-md)*1deg)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5">
-                  {rotateDelay}s
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {[3, 5, 10, 15, 30, 60].map((d) => (
-                    <DropdownMenuItem key={d} onClick={() => setRotateDelay(d)}>
-                      {d}s
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="shrink-0 pt-3">
+              <Link href={`/character/${characterId}/body`}>
+                <Button variant="outline" className="w-full">
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  Body Gallery ({bodyImages.length})
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
