@@ -244,18 +244,20 @@ export default function ImageGallery({ type }: ImageGalleryProps) {
             </>
           )}
 
-          <div
-            className="relative w-full h-full max-w-[90vw] max-h-[90vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src={images[lightboxIndex].url}
-              alt={images[lightboxIndex].originalName || "Character image"}
-              fill
-              className="object-contain"
-              unoptimized
-            />
-          </div>
+          {images[lightboxIndex] && (
+            <div
+              className="relative w-full h-full max-w-[90vw] max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Image
+                src={images[lightboxIndex].url}
+                alt={images[lightboxIndex].originalName || "Character image"}
+                fill
+                className="object-contain"
+                unoptimized
+              />
+            </div>
+          )}
 
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
             {lightboxIndex + 1} / {images.length}
