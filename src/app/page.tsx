@@ -5,7 +5,8 @@ import { CharacterWithLabels, PicType, LabelData } from "@/lib/types";
 import { CharacterCard } from "@/components/CharacterCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Shuffle, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Shuffle, Settings, Tag, X } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export default function GalleryPage() {
   const [characters, setCharacters] = useState<CharacterWithLabels[]>([]);
@@ -34,6 +36,8 @@ export default function GalleryPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importMode, setImportMode] = useState<"replace" | "merge">("replace");
   const [importing, setImporting] = useState(false);
+  const [labelsOpen, setLabelsOpen] = useState(false);
+  const [cascadeDeleteLabel, setCascadeDeleteLabel] = useState<LabelData | null>(null);
 
   const fetchCharacters = useCallback(async () => {
     setLoading(true);
@@ -95,6 +99,50 @@ export default function GalleryPage() {
     fetchCharacters();
     fetchLabels();
     setImporting(false);
+  };
+
+  const handleCreateLabel = async (name: string) => {
+    if (!name.trim()) return;
+    const res = await fetch("/api/labels", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim() }),
+    });
+    if (res.ok) {
+      fetchLabels();
+      toast("Label created");
+    }
+  };
+
+  const handleDeleteLabel = async (labelId: string) => {
+    const res = await fetch(`/api/labels/${labelId}`, { method: "DELETE" });
+    if (res.ok) {
+      fetchLabels();
+      if (selectedLabels.includes(labelId)) {
+        setSelectedLabels(selectedLabels.filter((id) => id !== labelId));
+      }
+      toast("Label deleted");
+    } else {
+      const data = await res.json();
+      if (data.code === "LABEL_HAS_CHARACTERS") {
+        const label = labels.find((l) => l.id === labelId);
+        if (label) setCascadeDeleteLabel(label);
+      }
+    }
+  };
+
+  const handleCascadeDeleteLabel = async () => {
+    if (!cascadeDeleteLabel) return;
+    const res = await fetch(`/api/labels/${cascadeDeleteLabel.id}/cascade`, { method: "DELETE" });
+    if (res.ok) {
+      fetchLabels();
+      fetchCharacters();
+      if (selectedLabels.includes(cascadeDeleteLabel.id)) {
+        setSelectedLabels(selectedLabels.filter((id) => id !== cascadeDeleteLabel.id));
+      }
+      toast("Label deleted (cascade)");
+      setCascadeDeleteLabel(null);
+    }
   };
 
   return (
@@ -188,6 +236,9 @@ export default function GalleryPage() {
                 Clear
               </Button>
             )}
+            <Button variant="ghost" size="sm" onClick={() => setLabelsOpen(true)}>
+              <Tag className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 
@@ -286,6 +337,95 @@ export default function GalleryPage() {
             </Button>
             <Button onClick={handleImport} disabled={!importFile || importing}>
               {importing ? "Importing..." : "Import"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={labelsOpen} onOpenChange={setLabelsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Labels</DialogTitle>
+            <DialogDescription>
+              Create and delete labels. Labels assigned to characters require cascade delete.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {labels.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">No labels yet</p>
+            )}
+            {labels.map((label) => (
+              <div key={label.id} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: label.color || "#888" }}
+                  />
+                  <span className="font-medium">{label.name}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {label.characterCount} {label.characterCount === 1 ? "character" : "characters"}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteLabel(label.id)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 border-t border-border pt-4">
+            <Input
+              placeholder="New label name..."
+              id="new-label-input"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const input = document.getElementById("new-label-input") as HTMLInputElement;
+                  if (input?.value) {
+                    handleCreateLabel(input.value);
+                    input.value = "";
+                  }
+                }
+              }}
+            />
+            <Button
+              variant="outline"
+              onClick={() => {
+                const input = document.getElementById("new-label-input") as HTMLInputElement;
+                if (input?.value) {
+                  handleCreateLabel(input.value);
+                  input.value = "";
+                }
+              }}
+            >
+              Add
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={cascadeDeleteLabel !== null} onOpenChange={() => setCascadeDeleteLabel(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Label</DialogTitle>
+            <DialogDescription>
+              The label &quot;{cascadeDeleteLabel?.name}&quot; is assigned to{" "}
+              {cascadeDeleteLabel?.characterCount}{" "}
+              {cascadeDeleteLabel?.characterCount === 1 ? "character" : "characters"}.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Deleting with cascade will remove the label from all these characters. This action
+            cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCascadeDeleteLabel(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleCascadeDeleteLabel}>
+              Cascade Delete
             </Button>
           </DialogFooter>
         </DialogContent>
