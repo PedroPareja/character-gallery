@@ -211,9 +211,9 @@ export default function CharacterDetailPage() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 max-w-screen-2xl mx-auto w-full px-4 py-4 flex flex-col">
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-4 lg:gap-6">
-          <div className="flex flex-col min-h-0">
+      <main className="flex-1 min-h-0 w-full px-4 py-4 flex flex-col">
+        <div className="flex-1 min-h-0 grid grid-cols-[1fr_380px_1fr] gap-4 lg:gap-6 min-w-0">
+          <div className="flex flex-col min-h-0 min-w-0">
             <div className="flex-1 min-h-0 relative rounded-lg overflow-hidden bg-muted">
               {faceUrl ? (
                 <>
@@ -323,7 +323,7 @@ export default function CharacterDetailPage() {
             </div>
           </div>
 
-          <div className="flex flex-col min-h-0">
+          <div className="flex flex-col min-h-0 min-w-0">
             <div className="flex-1 min-h-0 relative rounded-lg overflow-hidden bg-muted">
               {bodyUrl ? (
                 <>
