@@ -49,8 +49,8 @@ export async function POST() {
   writeFileSync(join(tempDir, "export.json"), JSON.stringify(exportData, null, 2));
 
   for (const img of images) {
-    const srcPath = join(process.cwd(), "data", "images", img.filename);
-    const destPath = join(tempDir, "images", img.filename);
+    const srcPath = join(process.cwd(), "data", "images", img.type, img.filename);
+    const destPath = join(tempDir, "images", img.type, img.filename);
     if (existsSync(srcPath)) {
       cpSync(srcPath, destPath);
     }
@@ -63,7 +63,7 @@ export async function POST() {
   const imagesBody = zip.folder("images/body");
 
   for (const img of images) {
-    const srcPath = join(process.cwd(), "data", "images", img.filename);
+    const srcPath = join(process.cwd(), "data", "images", img.type, img.filename);
     if (existsSync(srcPath)) {
       const content = readFileSync(srcPath);
       if (img.type === "face" && imagesFace) {
