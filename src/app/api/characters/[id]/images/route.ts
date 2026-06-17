@@ -3,7 +3,7 @@ import { eq, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
-import { writeFile, mkdir } from "fs/promises";
+import { mkdir } from "fs/promises";
 import { join } from "path";
 
 export async function GET(
@@ -42,6 +42,33 @@ export async function GET(
   });
 }
 
+async function processImage(file: File, imageId: string, imageDir: string, type: "face" | "body", characterId: string) {
+  const filename = `${imageId}.webp`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  await sharp(buffer)
+    .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 85 })
+    .toFile(join(imageDir, filename));
+
+  const now = new Date().toISOString();
+  db.insert(schema.images).values({
+    id: imageId,
+    characterId: characterId,
+    type,
+    filename,
+    originalName: file.name,
+    createdAt: now,
+  }).run();
+
+  return {
+    id: imageId,
+    url: `/api/images/${type}/${filename}`,
+    originalName: file.name,
+    createdAt: now,
+  };
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -68,9 +95,9 @@ export async function POST(
     return NextResponse.json({ error: "No files provided", code: "VALIDATION_ERROR" }, { status: 400 });
   }
 
-  if (files.length > 20) {
+  if (files.length > 50) {
     return NextResponse.json(
-      { error: "Maximum 20 files per request", code: "TOO_MANY_FILES" },
+      { error: "Maximum 50 files per request", code: "TOO_MANY_FILES" },
       { status: 400 }
     );
   }
@@ -94,36 +121,18 @@ export async function POST(
   const imageDir = join(process.cwd(), "data", "images", type);
   await mkdir(imageDir, { recursive: true });
 
-  const createdImages = [];
+  const imageIds = files.map(() => uuidv4());
 
-  for (const file of files) {
-    const imageId = uuidv4();
-    const filename = `${imageId}.webp`;
-    const buffer = Buffer.from(await file.arrayBuffer());
+  const processPromises = files.map((file, index) =>
+    processImage(file, imageIds[index], imageDir, type as "face" | "body", id)
+  );
 
-    await sharp(buffer)
-      .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 85 })
-      .toFile(join(imageDir, filename));
+  const createdImages = await Promise.all(processPromises);
 
-    const now = new Date().toISOString();
-    db.insert(schema.images).values({
-      id: imageId,
-      characterId: id,
-      type: type as "face" | "body",
-      filename,
-      originalName: file.name,
-      createdAt: now,
-    }).run();
-
-    const imgRecord = db.select().from(schema.images).where(eq(schema.images.id, imageId)).get()!;
-    createdImages.push({
-      id: imgRecord.id,
-      url: `/api/images/${type}/${imgRecord.filename}`,
-      originalName: imgRecord.originalName,
-      createdAt: imgRecord.createdAt,
-    });
-  }
+  db.update(schema.characters)
+    .set({ updatedAt: new Date().toISOString() })
+    .where(eq(schema.characters.id, id))
+    .run();
 
   return NextResponse.json({ images: createdImages }, { status: 201 });
 }
