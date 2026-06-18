@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { CharacterWithLabels, PicType, LabelData } from "@/lib/types";
+import { contrastTextColor } from "@/lib/utils";
 import { CharacterCard } from "@/components/CharacterCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { LabelData } from "@/lib/types";
+import { contrastTextColor } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,7 +108,7 @@ export default function NewCharacterPage() {
               {selectedLabels.map((label) => (
                 <Badge
                   key={label.id}
-                  style={{ backgroundColor: label.color || undefined }}
+                  style={{ backgroundColor: label.color || undefined, color: contrastTextColor(label.color) }}
                   className="gap-1 pr-1"
                 >
                   {label.name}

@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CharacterWithLabels, PicType } from "@/lib/types";
+import { contrastTextColor } from "@/lib/utils";
 import Image from "next/image";
 import { User } from "lucide-react";
 
@@ -45,7 +46,7 @@ export function CharacterCard({ character, picSet, onClick }: CharacterCardProps
                 key={label.id}
                 variant="secondary"
                 className="text-xs"
-                style={{ backgroundColor: label.color || undefined }}
+                style={{ backgroundColor: label.color || undefined, color: contrastTextColor(label.color) }}
               >
                 {label.name}
               </Badge>

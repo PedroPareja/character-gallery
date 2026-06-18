@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { User, ImageIcon, Trash2, Pencil, Tag, Shuffle, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { CharacterDetail, ImageData, PicType } from "@/lib/types";
+import { contrastTextColor } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -272,7 +273,7 @@ export default function CharacterDetailPage() {
                 {character.labels.map((label) => (
                   <Badge
                     key={label.id}
-                    style={{ backgroundColor: label.color || undefined }}
+                    style={{ backgroundColor: label.color || undefined, color: contrastTextColor(label.color) }}
                   >
                     {label.name}
                   </Badge>
@@ -386,7 +387,7 @@ export default function CharacterDetailPage() {
             {allLabels.map((label) => (
               <Badge
                 key={label.id}
-                style={{ backgroundColor: label.color || undefined }}
+                style={{ backgroundColor: label.color || undefined, color: contrastTextColor(label.color) }}
                 className={`cursor-pointer ${
                   selectedLabelIds.includes(label.id) ? "opacity-100" : "opacity-40"
                 }`}
