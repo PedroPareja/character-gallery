@@ -6,7 +6,7 @@ import { CharacterCard } from "@/components/CharacterCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Shuffle, Settings, Tag, X, ArrowUpDown } from "lucide-react";
+import { Plus, Shuffle, Settings, Tag, X, ArrowUpDown, Pencil, Check } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -44,6 +44,8 @@ export default function GalleryPage() {
   const [importing, setImporting] = useState(false);
   const [labelsOpen, setLabelsOpen] = useState(false);
   const [cascadeDeleteLabel, setCascadeDeleteLabel] = useState<LabelData | null>(null);
+  const [editingLabel, setEditingLabel] = useState<LabelData | null>(null);
+  const [editingColor, setEditingColor] = useState("");
 
   const fetchCharacters = useCallback(async () => {
     setLoading(true);
@@ -148,6 +150,19 @@ export default function GalleryPage() {
       }
       toast("Label deleted (cascade)");
       setCascadeDeleteLabel(null);
+    }
+  };
+
+  const handleEditLabelColor = async (labelId: string) => {
+    const res = await fetch(`/api/labels/${labelId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ color: editingColor }),
+    });
+    if (res.ok) {
+      fetchLabels();
+      setEditingLabel(null);
+      toast("Label color updated");
     }
   };
 
@@ -426,23 +441,59 @@ export default function GalleryPage() {
             )}
             {labels.map((label) => (
               <div key={label.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: label.color || "#888" }}
-                  />
-                  <span className="font-medium">{label.name}</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {label.characterCount} {label.characterCount === 1 ? "character" : "characters"}
-                  </Badge>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteLabel(label.id)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                {editingLabel?.id === label.id ? (
+                  <>
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="color"
+                        value={editingColor || label.color || "#888888"}
+                        onChange={(e) => setEditingColor(e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer border-0"
+                      />
+                      <span className="font-medium">{label.name}</span>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditLabelColor(label.id)}
+                      >
+                        <Check className="w-4 h-4 text-green-500" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingLabel(null)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-4 h-4 rounded-full cursor-pointer"
+                        style={{ backgroundColor: label.color || "#888" }}
+                        onClick={() => {
+                          setEditingLabel(label);
+                          setEditingColor(label.color || "#888888");
+                        }}
+                      />
+                      <span className="font-medium">{label.name}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {label.characterCount} {label.characterCount === 1 ? "character" : "characters"}
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteLabel(label.id)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             ))}
           </div>
