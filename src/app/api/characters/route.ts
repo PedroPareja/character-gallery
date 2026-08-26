@@ -11,6 +11,7 @@ export async function GET(request: Request) {
   const sortBy = searchParams.get("sortBy") || "name";
   const sortOrder = searchParams.get("sortOrder") || "asc";
   const labelFilterMode = searchParams.get("labelFilterMode") || "AND";
+  const nameFilter = (searchParams.get("name") || "").trim().toLowerCase();
 
   let characters;
 
@@ -50,6 +51,10 @@ export async function GET(request: Request) {
       .all();
   } else {
     characters = db.select().from(schema.characters).all();
+  }
+
+  if (nameFilter) {
+    characters = characters.filter((char) => char.name.toLowerCase().includes(nameFilter));
   }
 
   if (sortBy === "name") {

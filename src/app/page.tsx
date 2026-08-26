@@ -7,7 +7,7 @@ import { CharacterCard } from "@/components/CharacterCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Shuffle, Settings, Tag, X, ArrowUpDown, Pencil, Check } from "lucide-react";
+import { Plus, Shuffle, Settings, Tag, X, ArrowUpDown, Pencil, Check, Search } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -39,6 +39,8 @@ export default function GalleryPage() {
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [labelFilterMode, setLabelFilterMode] = useState<"AND" | "OR">("AND");
+  const [nameInput, setNameInput] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importMode, setImportMode] = useState<"replace" | "merge">("replace");
@@ -48,9 +50,17 @@ export default function GalleryPage() {
   const [editingLabel, setEditingLabel] = useState<LabelData | null>(null);
   const [editingColor, setEditingColor] = useState("");
 
+  useEffect(() => {
+    const t = setTimeout(() => setNameFilter(nameInput), 250);
+    return () => clearTimeout(t);
+  }, [nameInput]);
+
   const fetchCharacters = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ picSet, sortBy, sortOrder, labelFilterMode });
+    if (nameFilter) {
+      params.set("name", nameFilter);
+    }
     if (selectedLabels.length > 0) {
       params.set("labels", selectedLabels.join(","));
     }
@@ -58,7 +68,7 @@ export default function GalleryPage() {
     const data = await res.json();
     setCharacters(data.characters || []);
     setLoading(false);
-  }, [picSet, selectedLabels, sortBy, sortOrder, labelFilterMode]);
+  }, [picSet, selectedLabels, sortBy, sortOrder, labelFilterMode, nameFilter]);
 
   const fetchLabels = useCallback(async () => {
     const res = await fetch("/api/labels");
@@ -167,6 +177,8 @@ export default function GalleryPage() {
     }
   };
 
+  const isFiltered = selectedLabels.length > 0 || nameFilter.trim().length > 0;
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
@@ -195,6 +207,27 @@ export default function GalleryPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-wrap items-center gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div className="relative">
+              <Input
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="Filter by name..."
+                className="h-7 w-44 pl-7 text-[0.8rem]"
+              />
+              {nameInput.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setNameInput("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Pic set:</span>
             <DropdownMenu>
@@ -329,7 +362,7 @@ export default function GalleryPage() {
 
           {!loading && (
             <div className="ml-auto text-sm text-muted-foreground tabular-nums">
-              {selectedLabels.length > 0
+              {isFiltered
                 ? `${characters.length} ${characters.length === 1 ? "result" : "results"}`
                 : `${characters.length} ${characters.length === 1 ? "character" : "characters"}`}
             </div>
@@ -350,13 +383,11 @@ export default function GalleryPage() {
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-6xl mb-4">🎭</div>
             <h2 className="text-xl font-semibold text-foreground mb-2">
-              {selectedLabels.length > 0
-                ? "No characters match your filter"
-                : "No characters yet"}
+              {isFiltered ? "No characters match your filter" : "No characters yet"}
             </h2>
             <p className="text-muted-foreground mb-6">
-              {selectedLabels.length > 0
-                ? "Try selecting different labels or clear the filter"
+              {isFiltered
+                ? "Try different labels, a different name, or clear the filter"
                 : "Create your first character to get started!"}
             </p>
             <Link href="/character/new">
