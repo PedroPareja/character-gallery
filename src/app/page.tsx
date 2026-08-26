@@ -326,6 +326,14 @@ export default function GalleryPage() {
               <Tag className="w-4 h-4" />
             </Button>
           </div>
+
+          {!loading && (
+            <div className="ml-auto text-sm text-muted-foreground tabular-nums">
+              {selectedLabels.length > 0
+                ? `${characters.length} ${characters.length === 1 ? "result" : "results"}`
+                : `${characters.length} ${characters.length === 1 ? "character" : "characters"}`}
+            </div>
+          )}
         </div>
 
         {loading ? (
