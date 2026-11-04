@@ -29,6 +29,39 @@ import { toast } from "sonner";
 
 type SortBy = "name" | "createdAt" | "random";
 type SortOrder = "asc" | "desc";
+type LabelFilterMode = "AND" | "OR";
+
+const FILTER_STORAGE_KEY = "character-gallery:filters";
+
+interface SavedFilters {
+  picSet: PicType;
+  selectedLabels: string[];
+  excludedLabels: string[];
+  sortBy: SortBy;
+  sortOrder: SortOrder;
+  labelFilterMode: LabelFilterMode;
+  nameInput: string;
+}
+
+function loadSavedFilters(): SavedFilters | null {
+  try {
+    const raw = window.sessionStorage.getItem(FILTER_STORAGE_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Partial<SavedFilters>;
+    return {
+      picSet: saved.picSet === "body" ? "body" : "face",
+      selectedLabels: Array.isArray(saved.selectedLabels) ? saved.selectedLabels : [],
+      excludedLabels: Array.isArray(saved.excludedLabels) ? saved.excludedLabels : [],
+      sortBy:
+        saved.sortBy === "createdAt" || saved.sortBy === "random" ? saved.sortBy : "name",
+      sortOrder: saved.sortOrder === "desc" ? "desc" : "asc",
+      labelFilterMode: saved.labelFilterMode === "OR" ? "OR" : "AND",
+      nameInput: typeof saved.nameInput === "string" ? saved.nameInput : "",
+    };
+  } catch {
+    return null;
+  }
+}
 
 export default function GalleryPage() {
   const [characters, setCharacters] = useState<CharacterWithLabels[]>([]);
@@ -39,7 +72,7 @@ export default function GalleryPage() {
   const [excludedLabels, setExcludedLabels] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [labelFilterMode, setLabelFilterMode] = useState<"AND" | "OR">("AND");
+  const [labelFilterMode, setLabelFilterMode] = useState<LabelFilterMode>("AND");
   const [nameInput, setNameInput] = useState("");
   const [nameFilter, setNameFilter] = useState("");
   const [importOpen, setImportOpen] = useState(false);
@@ -50,6 +83,51 @@ export default function GalleryPage() {
   const [cascadeDeleteLabel, setCascadeDeleteLabel] = useState<LabelData | null>(null);
   const [editingLabel, setEditingLabel] = useState<LabelData | null>(null);
   const [editingColor, setEditingColor] = useState("");
+  const [filtersLoaded, setFiltersLoaded] = useState(false);
+
+  useEffect(() => {
+    const saved = loadSavedFilters();
+    if (saved) {
+      // Restore after mount so the server-rendered markup stays deterministic.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPicSet(saved.picSet);
+      setSelectedLabels(saved.selectedLabels);
+      setExcludedLabels(saved.excludedLabels);
+      setSortBy(saved.sortBy);
+      setSortOrder(saved.sortOrder);
+      setLabelFilterMode(saved.labelFilterMode);
+      setNameInput(saved.nameInput);
+      setNameFilter(saved.nameInput);
+    }
+    setFiltersLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!filtersLoaded) return;
+    const filters: SavedFilters = {
+      picSet,
+      selectedLabels,
+      excludedLabels,
+      sortBy,
+      sortOrder,
+      labelFilterMode,
+      nameInput,
+    };
+    try {
+      window.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+    } catch {
+      // Storage can be unavailable (private mode); filters still work for this visit.
+    }
+  }, [
+    filtersLoaded,
+    picSet,
+    selectedLabels,
+    excludedLabels,
+    sortBy,
+    sortOrder,
+    labelFilterMode,
+    nameInput,
+  ]);
 
   useEffect(() => {
     const t = setTimeout(() => setNameFilter(nameInput), 250);
@@ -81,9 +159,10 @@ export default function GalleryPage() {
   }, []);
 
   useEffect(() => {
+    if (!filtersLoaded) return;
     fetchCharacters();
     fetchLabels();
-  }, [fetchCharacters, fetchLabels]);
+  }, [filtersLoaded, fetchCharacters, fetchLabels]);
 
   const handleRandomCharacter = async () => {
     const params = new URLSearchParams();
@@ -248,7 +327,7 @@ export default function GalleryPage() {
             <span className="text-sm text-muted-foreground">Pic set:</span>
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-7 gap-1 rounded-[calc(var(--radius-md)*1deg)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5">
-                {picSet === "face" ? "◉ Face" : "○ Face"}
+                {picSet === "face" ? "Face" : "Body"}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
                 <DropdownMenuCheckboxItem

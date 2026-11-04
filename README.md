@@ -28,6 +28,7 @@ A web application for managing roleplay character collections with face and body
 - Toggle between face and body pic sets
 - Sort characters by: name (A→Z / Z→A), creation date (oldest/newest), or random
 - Filter by multiple labels with AND/OR logic
+- Filter, sort, and exclusion settings are remembered for the current browser session and restored when you return to the gallery
 
 ### Import/Export
 - Export all data to a ZIP backup file (includes database + all images)
