@@ -13,6 +13,7 @@ List all characters, optionally filtered by labels.
 | Param | Type | Description |
 |---|---|---|
 | `labels` | `string` | Comma-separated label IDs to filter by. Characters must have at least one matching label. |
+| `excludeLabels` | `string` | Comma-separated label IDs to exclude. Characters with any of these labels are removed from the results. |
 | `picSet` | `"face" \| "body"` | Which image set to include a random pic URL for. Default: `"face"`. |
 
 **Response `200`:**
@@ -177,6 +178,7 @@ Get a random character ID from the set matching current filters.
 | Param | Type | Description |
 |---|---|---|
 | `labels` | `string` | Comma-separated label IDs to filter by (same logic as `GET /api/characters`). |
+| `excludeLabels` | `string` | Comma-separated label IDs to exclude (same logic as `GET /api/characters`). |
 
 **Response `200`:**
 

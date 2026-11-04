@@ -7,6 +7,8 @@ import type { CharacterWithLabels, PicType } from "@/lib/types";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const labelFilter = searchParams.get("labels")?.split(",").filter(Boolean) || [];
+  const excludeLabelFilter =
+    searchParams.get("excludeLabels")?.split(",").filter(Boolean) || [];
   const picSet = (searchParams.get("picSet") as PicType) || "face";
   const sortBy = searchParams.get("sortBy") || "name";
   const sortOrder = searchParams.get("sortOrder") || "asc";
@@ -55,6 +57,18 @@ export async function GET(request: Request) {
 
   if (nameFilter) {
     characters = characters.filter((char) => char.name.toLowerCase().includes(nameFilter));
+  }
+
+  if (excludeLabelFilter.length > 0) {
+    const excludedCharacterIds = new Set(
+      db
+        .select({ characterId: schema.characterLabels.characterId })
+        .from(schema.characterLabels)
+        .where(inArray(schema.characterLabels.labelId, excludeLabelFilter))
+        .all()
+        .map((r) => r.characterId)
+    );
+    characters = characters.filter((char) => !excludedCharacterIds.has(char.id));
   }
 
   if (sortBy === "name") {

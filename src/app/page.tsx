@@ -36,6 +36,7 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true);
   const [picSet, setPicSet] = useState<PicType>("face");
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [excludedLabels, setExcludedLabels] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [labelFilterMode, setLabelFilterMode] = useState<"AND" | "OR">("AND");
@@ -64,11 +65,14 @@ export default function GalleryPage() {
     if (selectedLabels.length > 0) {
       params.set("labels", selectedLabels.join(","));
     }
+    if (excludedLabels.length > 0) {
+      params.set("excludeLabels", excludedLabels.join(","));
+    }
     const res = await fetch(`/api/characters?${params}`);
     const data = await res.json();
     setCharacters(data.characters || []);
     setLoading(false);
-  }, [picSet, selectedLabels, sortBy, sortOrder, labelFilterMode, nameFilter]);
+  }, [picSet, selectedLabels, excludedLabels, sortBy, sortOrder, labelFilterMode, nameFilter]);
 
   const fetchLabels = useCallback(async () => {
     const res = await fetch("/api/labels");
@@ -85,6 +89,9 @@ export default function GalleryPage() {
     const params = new URLSearchParams();
     if (selectedLabels.length > 0) {
       params.set("labels", selectedLabels.join(","));
+    }
+    if (excludedLabels.length > 0) {
+      params.set("excludeLabels", excludedLabels.join(","));
     }
     const res = await fetch(`/api/characters/random?${params}`);
     if (res.ok) {
@@ -140,6 +147,9 @@ export default function GalleryPage() {
       if (selectedLabels.includes(labelId)) {
         setSelectedLabels(selectedLabels.filter((id) => id !== labelId));
       }
+      if (excludedLabels.includes(labelId)) {
+        setExcludedLabels(excludedLabels.filter((id) => id !== labelId));
+      }
       toast("Label deleted");
     } else {
       const data = await res.json();
@@ -159,6 +169,9 @@ export default function GalleryPage() {
       if (selectedLabels.includes(cascadeDeleteLabel.id)) {
         setSelectedLabels(selectedLabels.filter((id) => id !== cascadeDeleteLabel.id));
       }
+      if (excludedLabels.includes(cascadeDeleteLabel.id)) {
+        setExcludedLabels(excludedLabels.filter((id) => id !== cascadeDeleteLabel.id));
+      }
       toast("Label deleted (cascade)");
       setCascadeDeleteLabel(null);
     }
@@ -177,7 +190,10 @@ export default function GalleryPage() {
     }
   };
 
-  const isFiltered = selectedLabels.length > 0 || nameFilter.trim().length > 0;
+  const isFiltered =
+    selectedLabels.length > 0 ||
+    excludedLabels.length > 0 ||
+    nameFilter.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -358,6 +374,48 @@ export default function GalleryPage() {
             <Button variant="ghost" size="sm" onClick={() => setLabelsOpen(true)}>
               <Tag className="w-4 h-4" />
             </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Exclude:</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-muted hover:text-foreground h-7 gap-1 rounded-[calc(var(--radius-md)*1deg)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5">
+                {excludedLabels.length === 0
+                  ? "None"
+                  : `${excludedLabels.length} excluded`}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                {labels.length === 0 && (
+                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                    No labels yet
+                  </div>
+                )}
+                {labels.map((label) => (
+                  <DropdownMenuCheckboxItem
+                    key={label.id}
+                    checked={excludedLabels.includes(label.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setExcludedLabels([...excludedLabels, label.id]);
+                      } else {
+                        setExcludedLabels(excludedLabels.filter((id) => id !== label.id));
+                      }
+                    }}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full mr-2 inline-block"
+                      style={{ backgroundColor: label.color || "#888" }}
+                    />
+                    {label.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {excludedLabels.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setExcludedLabels([])}>
+                Clear
+              </Button>
+            )}
           </div>
 
           {!loading && (

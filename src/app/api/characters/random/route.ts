@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const labelFilter = searchParams.get("labels")?.split(",").filter(Boolean) || [];
+  const excludeLabelFilter =
+    searchParams.get("excludeLabels")?.split(",").filter(Boolean) || [];
 
   let characters;
 
@@ -30,6 +32,18 @@ export async function GET(request: Request) {
       .all();
   } else {
     characters = db.select().from(schema.characters).all();
+  }
+
+  if (excludeLabelFilter.length > 0) {
+    const excludedCharacterIds = new Set(
+      db
+        .select({ characterId: schema.characterLabels.characterId })
+        .from(schema.characterLabels)
+        .where(inArray(schema.characterLabels.labelId, excludeLabelFilter))
+        .all()
+        .map((r) => r.characterId)
+    );
+    characters = characters.filter((char) => !excludedCharacterIds.has(char.id));
   }
 
   if (characters.length === 0) {

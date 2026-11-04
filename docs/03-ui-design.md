@@ -81,6 +81,7 @@
 | **[🎲 Random]** | Picks a random character from the currently filtered set and navigates to `/character/[id]`. |
 | **Pic set toggle** | `Face` / `Body` radio toggle. Controls which image set the random card pic comes from. Default: **Face**. |
 | **Labels filter** | Multi-select dropdown or pill toggle. Shows all labels. When labels are selected, only characters with at least one matching label are shown. "All" shows everything. |
+| **Exclude labels** | Multi-select dropdown. Characters with any selected label are hidden from the results. "None" excludes nothing. |
 | **Character card** | Displays one random image from the selected set (face or body). Shows character name below. Labels shown as small colored badges. Clicking the card navigates to the character detail screen. |
 | **Empty state** | Shown when no characters exist or no characters match the filter. |
 

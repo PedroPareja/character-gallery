@@ -21,6 +21,7 @@ A web application for managing roleplay character collections with face and body
 - Create and manage colored labels
 - Assign multiple labels to characters
 - Filter characters by labels (AND/OR mode)
+- Exclude characters by one or more labels
 - Cascade delete labels from all characters
 
 ### Gallery Controls
@@ -96,9 +97,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/characters` | List characters (supports `picSet`, `sortBy`, `sortOrder`, `labelFilterMode`, `labels` params) |
+| GET | `/api/characters` | List characters (supports `picSet`, `sortBy`, `sortOrder`, `labelFilterMode`, `labels`, `excludeLabels` params) |
 | POST | `/api/characters` | Create character |
-| GET | `/api/characters/random` | Get random character (respects label filter) |
+| GET | `/api/characters/random` | Get random character (respects label and exclusion filters) |
 | GET | `/api/characters/[id]` | Get character details |
 | PATCH | `/api/characters/[id]` | Update character (name, bio, labels) |
 | DELETE | `/api/characters/[id]` | Delete character (cascades to images) |
